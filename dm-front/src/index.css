@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Live dot pulse — Tailwind animate-pulse è sufficiente, ma questa è più lenta (1.6s) */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+.animate-live {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+/* Forza overflow nascosto su html/body/#root per il layout no-scroll */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}

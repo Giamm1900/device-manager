@@ -1,0 +1,90 @@
+# ── Python / Backend ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+myenv/
+.venv/
+venv/
+env/
+.env/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.lcov
+
+# mypy / ruff / pyright
+.mypy_cache/
+.ruff_cache/
+pyrightconfig.json
+
+# Hatch / uv build artifacts
+.hatch/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+dm-front/node_modules/
+
+# Build output
+dm-front/dist/
+dm-front/.vite/
+dist/
+
+# Vite cache
+*.local
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Keep Dockerfiles and docker-compose.yml tracked; ignore runtime state
+docker/postgres-data/
+docker/data/
+.docker/
+
+# ── OS / IDE ──────────────────────────────────────────────────────────────────
+# Windows
+Thumbs.db
+desktop.ini
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# JetBrains
+.idea/
+*.iml
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+backup-dm-dev/
