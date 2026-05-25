@@ -1,9 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useMachine } from '../../context/MachineContext';
-import { useTimeRange } from '../../context/TimeRangeContext';
 import PanelWrapper from './PanelWrapper';
-import { resolveTimeWindow } from '../../hooks/useTimeWindow';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const SLOTS = Array.from({ length: 30 }, (_, i) => String(i * 2).padStart(2, '0'));
@@ -64,22 +62,8 @@ function toLocalDateString(date: Date): string {
 
 export default function ParquetHeatmapPanel() {
   const { selectedMachine } = useMachine();
-  const { mode, preset, customFrom } = useTimeRange();
 
-  // Calcola la data di partenza del range selezionato
-  const rangeStartDate = useMemo(() => {
-    if (mode === 'custom') return customFrom.slice(0, 10);
-    const { start } = resolveTimeWindow(mode, preset, customFrom, '');
-    return start.slice(0, 10);
-  }, [mode, preset, customFrom]);
-
-  // Giorno visualizzato (navigabile con le frecce)
-  const [viewDate, setViewDate] = useState(rangeStartDate);
-
-  // Sincronizza viewDate quando cambia il range
-  useEffect(() => {
-    setViewDate(rangeStartDate);
-  }, [rangeStartDate]);
+  const [viewDate, setViewDate] = useState(toLocalDateString(new Date()));
 
   const today = toLocalDateString(new Date());
   const isToday = viewDate === today;
@@ -274,7 +258,7 @@ export default function ParquetHeatmapPanel() {
             >
               ‹
             </button>
-            <span className="text-xs text-slate-800 font-semibold font-mono min-w-[64px] text-center bg-slate-100 rounded px-2 py-0.5">{displayDate}</span>
+            <span className="text-xs text-slate-800 font-semibold font-mono min-w-16 text-center bg-slate-100 rounded px-2 py-0.5">{displayDate}</span>
             <button
               type="button"
               onClick={nextDay}

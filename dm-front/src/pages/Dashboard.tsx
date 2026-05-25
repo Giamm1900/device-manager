@@ -17,8 +17,13 @@ function PanelArea() {
   return (
     <div className="flex flex-col flex-1 min-h-0 min-w-0 overflow-hidden relative">
       <MachineBar />
-      <TimeRangeBar />
-      <KpiBar />
+
+      <div className="flex items-start gap-2 shrink-0 px-2 pt-2">
+        <div className="flex-1 min-w-0">
+          <KpiBar />
+        </div>
+        <TimeRangeBar />
+      </div>
 
       <div className="grid grid-cols-[55fr_45fr] gap-3 flex-1 min-h-0 p-2 overflow-hidden">
         <ParquetHeatmapPanel />
@@ -31,7 +36,7 @@ function PanelArea() {
 
       {/* Global empty state — sovrapposto all'area pannelli */}
       {!selectedMachine && (
-        <div className="absolute inset-0 top-[84px] flex flex-col items-center justify-center gap-3 bg-slate-100/90 backdrop-blur-[2px] z-10">
+        <div className="absolute inset-0 top-14 flex flex-col items-center justify-center gap-3 bg-slate-100/90 backdrop-blur-[2px] z-10">
           <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" className="w-14 h-14">
             <rect x="2" y="3" width="20" height="14" rx="2" />
             <path d="M8 21h8M12 17v4" />
