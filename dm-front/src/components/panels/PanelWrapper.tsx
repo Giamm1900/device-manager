@@ -48,7 +48,7 @@ export default function PanelWrapper({
           {infoOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setInfoOpen(false)} />
-              <div className="absolute top-full left-0 z-50 mt-1 bg-slate-800 text-slate-100 text-[11px] rounded-md px-3 py-2 w-72 shadow-lg leading-relaxed">
+              <div className="absolute top-full right-0 z-50 mt-1 bg-slate-800 text-slate-100 text-[11px] rounded-md px-3 py-2 w-72 shadow-lg leading-relaxed">
                 {description}
               </div>
             </>
