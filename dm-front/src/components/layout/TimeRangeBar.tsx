@@ -109,15 +109,17 @@ export default function TimeRangeBar() {
       {/* Custom range inputs — visibili solo quando showCustom è attivo */}
       {showCustom && (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-slate-500 font-medium">Da</span>
+          <label htmlFor="time-range-from" className="text-xs text-slate-500 font-medium">Da</label>
           <input
+            id="time-range-from"
             type="datetime-local"
             value={draftFrom}
             onChange={e => { setDraftFrom(e.target.value); setRangeError(''); }}
             className="text-xs text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <span className="text-xs text-slate-500 font-medium">A</span>
+          <label htmlFor="time-range-to" className="text-xs text-slate-500 font-medium">A</label>
           <input
+            id="time-range-to"
             type="datetime-local"
             value={draftTo}
             onChange={e => { setDraftTo(e.target.value); setRangeError(''); }}
