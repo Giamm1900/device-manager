@@ -2,6 +2,7 @@ export type MachineStatus = 'online' | 'offline' | 'unknown';
 
 export interface Machine {
   id: string;
+  dbId: number;
   name: string;
   status: MachineStatus;
 }
@@ -27,17 +28,17 @@ export const MOCK_TREE: Client[] = [
         id: 'p1',
         name: 'Stabilimento Nord',
         machines: [
-          { id: 'm1', name: 'CNC-01',   status: 'online'  },
-          { id: 'm2', name: 'CNC-02',   status: 'offline' },
-          { id: 'm3', name: 'Press-01', status: 'online'  },
+          { id: 'm1', dbId: 34, name: 'CNC-01',   status: 'online'  },
+          { id: 'm2', dbId: 32, name: 'CNC-02',   status: 'offline' },
+          { id: 'm3', dbId: 35, name: 'Press-01', status: 'online'  },
         ],
       },
       {
         id: 'p2',
         name: 'Stabilimento Sud',
         machines: [
-          { id: 'm4', name: 'Robot-01', status: 'online'  },
-          { id: 'm5', name: 'Robot-02', status: 'unknown' },
+          { id: 'm4', dbId: 36, name: 'Robot-01', status: 'online'  },
+          { id: 'm5', dbId: 37, name: 'Robot-02', status: 'unknown' },
         ],
       },
     ],
@@ -50,16 +51,16 @@ export const MOCK_TREE: Client[] = [
         id: 'p3',
         name: 'Linea A',
         machines: [
-          { id: 'm6', name: 'Conveyor-01', status: 'online'  },
-          { id: 'm7', name: 'Conveyor-02', status: 'offline' },
+          { id: 'm6', dbId: 38, name: 'Conveyor-01', status: 'online'  },
+          { id: 'm7', dbId: 39, name: 'Conveyor-02', status: 'offline' },
         ],
       },
       {
         id: 'p4',
         name: 'Linea B',
         machines: [
-          { id: 'm8', name: 'Welder-01', status: 'online' },
-          { id: 'm9', name: 'Welder-02', status: 'online' },
+          { id: 'm8', dbId: 40, name: 'Welder-01', status: 'online' },
+          { id: 'm9', dbId: 41, name: 'Welder-02', status: 'online' },
         ],
       },
     ],

@@ -13,6 +13,7 @@ from app.models.telemetry import (
 )
 from app.schemas.filters import TimeRangeParams
 from app.schemas.telemetry import (
+    DataSenderItem,
     DataSenderResponse,
     EdgeStatusPoint,
     EdgeStatusResponse,
@@ -72,7 +73,7 @@ def get_pc_stats(filters: TimeRangeParams = Depends(), db: Session = Depends(get
             .group_by(text("1"))
             .order_by(text("1"))
         ).all()
-        series = [PcStatPoint(t=r.t, cpu=r.cpu, memory=r.memory, disk=r.disk) for r in rows]
+        series = [PcStatPoint(**r._mapping) for r in rows]
     return PcStatsResponse(bucket=resolved, series=series)
 
 
@@ -112,7 +113,7 @@ def get_ignition_stats(filters: TimeRangeParams = Depends(), db: Session = Depen
                 AVG(process_cpu_load_percent)         AS cpu,
                 AVG(jvm_memory_percent)               AS jvm_memory,
                 (array_agg(db_status ORDER BY timestamp_utc DESC))[1] AS db_status
-            FROM telemetry_ignition_stats
+            FROM public.telemetry_ignition_stats
             WHERE id_machine = :machine_id
               AND timestamp_utc >= :start
               AND timestamp_utc < :end
@@ -123,10 +124,7 @@ def get_ignition_stats(filters: TimeRangeParams = Depends(), db: Session = Depen
             stmt,
             {"machine_id": filters.machine_id, "start": filters.start, "end": filters.end},
         ).all()
-        series = [
-            IgnitionStatPoint(t=r.t, cpu=r.cpu, jvm_memory=r.jvm_memory, db_status=r.db_status)
-            for r in rows
-        ]
+        series = [IgnitionStatPoint(**r._mapping) for r in rows]
     return IgnitionStatsResponse(bucket=resolved, series=series)
 
 
@@ -134,27 +132,31 @@ def get_ignition_stats(filters: TimeRangeParams = Depends(), db: Session = Depen
 def get_data_sender(
     filters: TimeRangeParams = Depends(),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(default=50, ge=1, le=1440),
     db: Session = Depends(get_db),
 ):
     where = (
         TelemetryDataSender.id_machine == filters.machine_id,
+        TelemetryDataSender.event_subtype == 'data_sender_parquet_chunk',
         TelemetryDataSender.processing_timestamp_utc >= filters.start,
         TelemetryDataSender.processing_timestamp_utc < filters.end,
     )
-    total = db.scalar(select(func.count(TelemetryDataSender.id)).where(*where))
+    total = db.scalar(select(func.count(TelemetryDataSender.id)).where(*where)) or 0
     total_rows = db.scalar(
         select(func.coalesce(func.sum(TelemetryDataSender.rows_count), 0)).where(*where)
-    )
-    items = db.scalars(
-        select(TelemetryDataSender)
-        .where(*where)
-        .order_by(TelemetryDataSender.processing_timestamp_utc.desc())
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    ).all()
+    ) or 0
+    items = [
+        DataSenderItem.model_validate(row)
+        for row in db.scalars(
+            select(TelemetryDataSender)
+            .where(*where)
+            .order_by(TelemetryDataSender.processing_timestamp_utc.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).all()
+    ]
     return DataSenderResponse(
-        items=items,
+        items=list(items),
         page=page,
         page_size=page_size,
         total=total,
@@ -176,14 +178,17 @@ def get_edge_status(filters: TimeRangeParams = Depends(), db: Session = Depends(
 
     series = [EdgeStatusPoint(t=r.timestamp_utc, online=r.value) for r in rows]
 
-    total_duration = (filters.end - filters.start).total_seconds()
+    end_naive   = filters.end.replace(tzinfo=None)
+    start_naive = filters.start.replace(tzinfo=None)
+    total_duration = (end_naive - start_naive).total_seconds()
     if not rows or total_duration == 0:
         uptime_percent = 0.0
     else:
         online_seconds = 0.0
         for i, row in enumerate(rows):
-            next_t = rows[i + 1].timestamp_utc if i + 1 < len(rows) else filters.end
-            duration = (next_t - row.timestamp_utc).total_seconds()
+            t_cur = row.timestamp_utc.replace(tzinfo=None)
+            t_next = rows[i + 1].timestamp_utc.replace(tzinfo=None) if i + 1 < len(rows) else end_naive
+            duration = (t_next - t_cur).total_seconds()
             if row.value:
                 online_seconds += duration
         uptime_percent = round(online_seconds / total_duration * 100, 2)

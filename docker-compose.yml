@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     volumes:
-      - ./backup-dm-dev:/dump/backup-dm-dev:ro
+      - ./backup-dm-dev.sql:/dump/backup-dm-dev.sql:ro
       - ./docker/init-db.sh:/docker-entrypoint-initdb.d/01-restore.sh:ro
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -19,7 +19,9 @@ services:
       start_period: 60s
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/device-manager
       CORS_ORIGINS: '["http://localhost:5173"]'

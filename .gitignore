@@ -88,3 +88,5 @@ desktop.ini
 *.tmp
 *.bak
 backup-dm-dev/
+backup-dm-dev-old
+backup-dm-dev.sql

@@ -131,7 +131,7 @@ def get_alerts_summary(
     ).all()
     return AlertSummaryResponse(
         items=[
-            AlertSummaryItem(day=r.day.date().isoformat(), severity=r.severity, count=r.count)
+            AlertSummaryItem(day=r.day.date().isoformat(), severity=r.severity, count=int(r.alert_count))
             for r in rows
         ]
     )

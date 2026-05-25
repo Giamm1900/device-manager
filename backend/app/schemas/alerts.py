@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -22,7 +23,7 @@ class AlertDetailOut(BaseModel):
     status: str
     timestamp_start: datetime
     timestamp_end: datetime
-    comments: dict
+    comments: list[dict[str, Any]]
     saved_by_user: bool
     alert_type: AlertTypeInfo
     machine_alert_rule: AlertRuleInfo | None

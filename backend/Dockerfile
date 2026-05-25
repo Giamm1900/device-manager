@@ -3,8 +3,8 @@ WORKDIR /app
 
 COPY pyproject.toml .
 RUN mkdir app && touch app/__init__.py && \
-    pip install --no-cache-dir hatchling && \
-    pip install --no-cache-dir .
+    pip install --no-cache-dir --root-user-action=ignore hatchling && \
+    pip install --no-cache-dir --root-user-action=ignore .
 
 COPY app/ ./app/
 EXPOSE 8000

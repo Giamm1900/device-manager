@@ -1,6 +1,11 @@
 from datetime import datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict
+
+
+class DataSenderEventSubtype(StrEnum):
+    PARQUET_CHUNK = "data_sender_parquet_chunk"
 
 
 class PcStatPoint(BaseModel):
@@ -31,7 +36,7 @@ class DataSenderItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    event_subtype: str
+    event_subtype: DataSenderEventSubtype
     parquet_subfolder: str | None
     parquet_filename: str | None
     rows_count: int | None

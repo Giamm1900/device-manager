@@ -52,7 +52,7 @@ class Alert(Base):
     status: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     timestamp_start: Mapped[datetime] = mapped_column(nullable=False, index=True)
     timestamp_end: Mapped[datetime] = mapped_column(nullable=False, index=True)
-    comments: Mapped[dict] = mapped_column(JSON, nullable=False)
+    comments: Mapped[list] = mapped_column(JSON, nullable=False)
     saved_by_user: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default="false", index=True
     )
