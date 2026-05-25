@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange, type Preset } from '../../context/TimeRangeContext';
-import { resolveTimeWindow } from '../../hooks/useTimeWindow';
+import { useTelemetry } from '../../context/TelemetryContext';
 
 type TrendStatus = 'ok' | 'warn' | 'err';
 
@@ -51,10 +51,6 @@ function KpiCard({ label, value, sub, accentClass, badge, valueStatus, trend }: 
   );
 }
 
-interface PcStatPoint   { cpu: number | null; memory: number | null; disk: number | null; }
-interface IgnitionPoint { db_status: string | null; }
-interface EdgeResponse  { uptime_percent: number; }
-
 function avg(arr: (number | null)[]): number | null {
   const vals = arr.filter((v): v is number => v !== null);
   if (!vals.length) return null;
@@ -78,34 +74,8 @@ const RANGE_SUB: Record<Preset, string> = {
 
 export default function KpiBar() {
   const { selectedMachine } = useMachine();
-  const { mode, preset, customFrom, customTo } = useTimeRange();
-
-  const [pcSeries,   setPcSeries]   = useState<PcStatPoint[]>([]);
-  const [ignSeries,  setIgnSeries]  = useState<IgnitionPoint[]>([]);
-  const [edgeData,   setEdgeData]   = useState<EdgeResponse | null>(null);
-
-  useEffect(() => {
-    if (!selectedMachine) {
-      setPcSeries([]); setIgnSeries([]); setEdgeData(null);
-      return;
-    }
-    const { start, end } = resolveTimeWindow(mode, preset, customFrom, customTo);
-    const q = `machine_id=${selectedMachine.dbId}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
-    let cancelled = false;
-
-    Promise.all([
-      fetch(`/api/v1/telemetry/pc-stats?${q}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/v1/telemetry/ignition-stats?${q}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/v1/telemetry/edge-status?${q}`).then(r => r.ok ? r.json() : null),
-    ]).then(([pc, ign, edge]) => {
-      if (cancelled) return;
-      setPcSeries(pc?.series  ?? []);
-      setIgnSeries(ign?.series ?? []);
-      setEdgeData(edge ?? null);
-    }).catch(() => {});
-
-    return () => { cancelled = true; };
-  }, [selectedMachine, mode, preset, customFrom, customTo]);
+  const { mode, preset } = useTimeRange();
+  const { pcSeries, ignSeries, edgeData } = useTelemetry();
 
   const cpu    = useMemo(() => avg(pcSeries.map(p => p.cpu)),    [pcSeries]);
   const ram    = useMemo(() => avg(pcSeries.map(p => p.memory)), [pcSeries]);

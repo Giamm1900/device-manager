@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import PanelWrapper from './PanelWrapper';
 import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange } from '../../context/TimeRangeContext';
+import { useTelemetry } from '../../context/TelemetryContext';
 import { resolveTimeWindow } from '../../hooks/useTimeWindow';
-
-interface IgnitionStatPoint { t: string; cpu: number | null; jvm_memory: number | null; db_status: string | null; }
 
 function fmtTs(ts: number, rangeMs: number): string {
   const d = new Date(ts);
@@ -13,28 +12,20 @@ function fmtTs(ts: number, rangeMs: number): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+function DbStatusBadge({ status }: { status: string | null }) {
+  if (!status) return null;
+  const ok = status.toUpperCase() === 'OK';
+  return (
+    <span className={`ml-2 px-2 py-0.5 rounded text-xs font-semibold ${ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+      DB: {status}
+    </span>
+  );
+}
+
 export default function IgnitionPanel() {
   const { selectedMachine } = useMachine();
   const { mode, preset, customFrom, customTo } = useTimeRange();
-  const [series, setData]    = useState<IgnitionStatPoint[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]    = useState(false);
-
-  useEffect(() => {
-    if (!selectedMachine) { setData([]); return; }
-    const { start, end } = resolveTimeWindow(mode, preset, customFrom, customTo);
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    fetch(
-      `/api/v1/telemetry/ignition-stats?machine_id=${selectedMachine.dbId}` +
-      `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`,
-    )
-      .then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<{ series: IgnitionStatPoint[] }>; })
-      .then(body => { if (!cancelled) { setData(body.series); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setError(true); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [selectedMachine, mode, preset, customFrom, customTo]);
+  const { ignSeries: series, ignLatestDbStatus, loading, error, refresh } = useTelemetry();
 
   const rangeMs = useMemo(
     () => resolveTimeWindow(mode, preset, customFrom, customTo).rangeMs,
@@ -88,14 +79,22 @@ export default function IgnitionPanel() {
       title="Ignition — Gateway SCADA"
       description="Carico CPU del processo Java (Ignition) e utilizzo heap JVM. Picchi frequenti di JVM > 85% suggeriscono tag overload, query OPC lente o memory leak."
       status={error ? 'err' : loading ? 'idle' : 'ok'}
+      headerExtra={<DbStatusBadge status={ignLatestDbStatus} />}
     >
       {!selectedMachine ? (
         <div className="h-full flex items-center justify-center text-sm text-slate-400">
           Seleziona una macchina
         </div>
       ) : error ? (
-        <div className="h-full flex items-center justify-center text-sm text-red-500">
-          Errore nel caricamento dei dati.
+        <div className="h-full flex flex-col items-center justify-center gap-2">
+          <span className="text-sm text-red-500">Errore nel caricamento dei dati.</span>
+          <button
+            type="button"
+            onClick={refresh}
+            className="px-3 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            Riprova
+          </button>
         </div>
       ) : (
         <ReactECharts

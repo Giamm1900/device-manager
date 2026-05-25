@@ -13,6 +13,9 @@ class PcStatPoint(BaseModel):
     cpu: float | None
     memory: float | None
     disk: float | None
+    cpu_max: float | None = None
+    memory_max: float | None = None
+    disk_max: float | None = None
 
 
 class PcStatsResponse(BaseModel):
@@ -29,6 +32,7 @@ class IgnitionStatPoint(BaseModel):
 
 class IgnitionStatsResponse(BaseModel):
     bucket: str
+    latest_db_status: str | None
     series: list[IgnitionStatPoint]
 
 

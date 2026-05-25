@@ -60,14 +60,29 @@ def get_pc_stats(filters: TimeRangeParams = Depends(), db: Session = Depends(get
             PcStatPoint(t=r.timestamp_utc, cpu=r.cpu_percent, memory=r.memory_percent, disk=r.disk_percent)
             for r in rows
         ]
-    else:
-        trunc = "hour" if resolved == "1h" else "day"
+    elif resolved == "1h":
         rows = db.execute(
             select(
-                func.date_trunc(trunc, TelemetryPcStats.timestamp_utc).label("t"),
+                func.date_trunc("hour", TelemetryPcStats.timestamp_utc).label("t"),
                 func.avg(TelemetryPcStats.cpu_percent).label("cpu"),
                 func.avg(TelemetryPcStats.memory_percent).label("memory"),
                 func.avg(TelemetryPcStats.disk_percent).label("disk"),
+            )
+            .where(*where)
+            .group_by(text("1"))
+            .order_by(text("1"))
+        ).all()
+        series = [PcStatPoint(**r._mapping) for r in rows]
+    else:  # 1d
+        rows = db.execute(
+            select(
+                func.date_trunc("day", TelemetryPcStats.timestamp_utc).label("t"),
+                func.avg(TelemetryPcStats.cpu_percent).label("cpu"),
+                func.avg(TelemetryPcStats.memory_percent).label("memory"),
+                func.avg(TelemetryPcStats.disk_percent).label("disk"),
+                func.max(TelemetryPcStats.cpu_percent).label("cpu_max"),
+                func.max(TelemetryPcStats.memory_percent).label("memory_max"),
+                func.max(TelemetryPcStats.disk_percent).label("disk_max"),
             )
             .where(*where)
             .group_by(text("1"))
@@ -125,7 +140,14 @@ def get_ignition_stats(filters: TimeRangeParams = Depends(), db: Session = Depen
             {"machine_id": filters.machine_id, "start": filters.start, "end": filters.end},
         ).all()
         series = [IgnitionStatPoint(**r._mapping) for r in rows]
-    return IgnitionStatsResponse(bucket=resolved, series=series)
+
+    latest_db_status = db.scalar(
+        select(TelemetryIgnitionStats.db_status)
+        .where(*where)
+        .order_by(TelemetryIgnitionStats.timestamp_utc.desc())
+        .limit(1)
+    )
+    return IgnitionStatsResponse(bucket=resolved, latest_db_status=latest_db_status, series=series)
 
 
 @router.get("/telemetry/data-sender", response_model=DataSenderResponse)

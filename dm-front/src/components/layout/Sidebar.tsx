@@ -32,17 +32,40 @@ function NavIcon({ page }: { page: Page }) {
   );
 }
 
+const STORAGE_KEY = 'dm-sidebar-collapsed';
+
 export default function Sidebar() {
   const [activePage, setActivePage] = useState<Page>('dashboard');
+  const [collapsed, setCollapsed] = useState<boolean>(
+    () => localStorage.getItem(STORAGE_KEY) === 'true',
+  );
+
+  function toggleCollapse() {
+    setCollapsed(v => {
+      const next = !v;
+      localStorage.setItem(STORAGE_KEY, String(next));
+      return next;
+    });
+  }
 
   return (
-    <aside className="w-52 bg-white border-r border-slate-200 flex flex-col shrink-0">
-      <div className="px-4 h-12 flex items-center border-b border-slate-100 shrink-0">
-        <span className="text-[13px] font-bold text-slate-800 tracking-tight">
-          Device<span className="text-blue-600">Manager</span>
-        </span>
+    <aside
+      className={`bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all duration-200 ${
+        collapsed ? 'w-12' : 'w-52'
+      }`}
+    >
+      {/* Logo / branding */}
+      <div className="px-3 h-12 flex items-center border-b border-slate-100 shrink-0 overflow-hidden">
+        {collapsed ? (
+          <span className="text-[13px] font-bold text-blue-600 leading-none mx-auto">DM</span>
+        ) : (
+          <span className="text-[13px] font-bold text-slate-800 tracking-tight whitespace-nowrap">
+            Device<span className="text-blue-600">Manager</span>
+          </span>
+        )}
       </div>
 
+      {/* Nav items */}
       <nav className="flex-1 py-2">
         {NAV.map(({ id, label }) => {
           const isActive = activePage === id;
@@ -51,18 +74,38 @@ export default function Sidebar() {
               key={id}
               type="button"
               onClick={() => setActivePage(id)}
-              className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[12px] font-medium transition-colors ${
+              title={collapsed ? label : undefined}
+              className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[12px] font-medium transition-colors ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-              }`}
+              } ${collapsed ? 'justify-center' : ''}`}
             >
               <NavIcon page={id} />
-              {label}
+              {!collapsed && <span className="truncate">{label}</span>}
             </button>
           );
         })}
       </nav>
+
+      {/* Collapse toggle */}
+      <div className="border-t border-slate-100 py-2 px-2 shrink-0">
+        <button
+          type="button"
+          onClick={toggleCollapse}
+          title={collapsed ? 'Espandi sidebar' : 'Comprimi sidebar'}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded text-[11px] text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsed ? 'rotate-180' : ''}`}
+          >
+            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+          {!collapsed && <span>Comprimi</span>}
+        </button>
+      </div>
     </aside>
   );
 }

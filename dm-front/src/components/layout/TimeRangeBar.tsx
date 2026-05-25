@@ -32,9 +32,31 @@ export default function TimeRangeBar() {
   const { mode, preset, customFrom, customTo, setPreset, setCustomRange } = useTimeRange();
   const [draftFrom, setDraftFrom] = useState(customFrom);
   const [draftTo,   setDraftTo]   = useState(customTo);
+  const [showCustom, setShowCustom] = useState(mode === 'custom');
+  const [rangeError, setRangeError] = useState('');
+
+  function handlePreset(p: Preset) {
+    setPreset(p);
+    setShowCustom(false);
+    setRangeError('');
+  }
+
+  function handleCustomToggle() {
+    setShowCustom(v => !v);
+    setRangeError('');
+  }
 
   function handleApply() {
-    if (draftFrom && draftTo) setCustomRange(draftFrom, draftTo);
+    if (!draftFrom || !draftTo) {
+      setRangeError('Inserisci entrambe le date.');
+      return;
+    }
+    if (draftFrom >= draftTo) {
+      setRangeError('"Da" deve essere precedente a "A".');
+      return;
+    }
+    setRangeError('');
+    setCustomRange(draftFrom, draftTo);
   }
 
   const rangeLabel =
@@ -51,7 +73,7 @@ export default function TimeRangeBar() {
           <button
             key={p.value}
             type="button"
-            onClick={() => setPreset(p.value)}
+            onClick={() => handlePreset(p.value)}
             className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
               mode === 'preset' && preset === p.value
                 ? 'bg-blue-600 text-white'
@@ -61,34 +83,56 @@ export default function TimeRangeBar() {
             {p.label}
           </button>
         ))}
-      </div>
 
-      <div className="w-px h-5 bg-slate-200 shrink-0" />
-
-      {/* Custom range inputs */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <span className="text-[11px] text-slate-400">Da</span>
-        <input
-          type="datetime-local"
-          value={draftFrom}
-          onChange={e => setDraftFrom(e.target.value)}
-          className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        <span className="text-[11px] text-slate-400">A</span>
-        <input
-          type="datetime-local"
-          value={draftTo}
-          onChange={e => setDraftTo(e.target.value)}
-          className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        {/* Custom toggle pill */}
         <button
           type="button"
-          onClick={handleApply}
-          className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-700 text-white hover:bg-slate-800 transition-colors"
+          onClick={handleCustomToggle}
+          className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+            mode === 'custom'
+              ? 'bg-blue-600 text-white'
+              : showCustom
+              ? 'bg-slate-200 text-slate-700'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+          }`}
         >
-          Applica
+          Custom
         </button>
       </div>
+
+      {/* Custom range inputs — visibili solo quando showCustom è attivo */}
+      {showCustom && (
+        <>
+          <div className="w-px h-5 bg-slate-200 shrink-0" />
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] text-slate-400">Da</span>
+            <input
+              type="datetime-local"
+              value={draftFrom}
+              onChange={e => { setDraftFrom(e.target.value); setRangeError(''); }}
+              className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <span className="text-[11px] text-slate-400">A</span>
+            <input
+              type="datetime-local"
+              value={draftTo}
+              onChange={e => { setDraftTo(e.target.value); setRangeError(''); }}
+              className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={handleApply}
+              className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-700 text-white hover:bg-slate-800 transition-colors"
+            >
+              Applica
+            </button>
+            {rangeError && (
+              <span className="text-[10px] text-red-500">{rangeError}</span>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="w-px h-5 bg-slate-200 shrink-0" />
 

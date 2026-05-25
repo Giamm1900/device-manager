@@ -1,8 +1,9 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { useMachine } from '../../context/MachineContext';
 import { useTimeRange } from '../../context/TimeRangeContext';
 import PanelWrapper from './PanelWrapper';
+import { resolveTimeWindow } from '../../hooks/useTimeWindow';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const SLOTS = Array.from({ length: 30 }, (_, i) => String(i * 2).padStart(2, '0'));
@@ -15,7 +16,6 @@ interface ApiItem {
   rows_count: number;
   processing_timestamp_utc: string;
 }
-
 
 interface DrawerState {
   hour: number;
@@ -58,19 +58,55 @@ function Row({
   );
 }
 
+function toLocalDateString(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export default function ParquetHeatmapPanel() {
   const { selectedMachine } = useMachine();
-  const { mode, customFrom } = useTimeRange();
+  const { mode, preset, customFrom } = useTimeRange();
 
-  const selectedDate = useMemo(() => {
+  // Calcola la data di partenza del range selezionato
+  const rangeStartDate = useMemo(() => {
     if (mode === 'custom') return customFrom.slice(0, 10);
-    return new Date().toISOString().slice(0, 10);
-  }, [mode, customFrom]);
+    const { start } = resolveTimeWindow(mode, preset, customFrom, '');
+    return start.slice(0, 10);
+  }, [mode, preset, customFrom]);
+
+  // Giorno visualizzato (navigabile con le frecce)
+  const [viewDate, setViewDate] = useState(rangeStartDate);
+
+  // Sincronizza viewDate quando cambia il range
+  useEffect(() => {
+    setViewDate(rangeStartDate);
+  }, [rangeStartDate]);
+
+  const today = toLocalDateString(new Date());
+  const isToday = viewDate === today;
+
+  const prevDay = useCallback(() => {
+    setViewDate(d => {
+      const prev = new Date(d + 'T12:00:00');
+      prev.setDate(prev.getDate() - 1);
+      return toLocalDateString(prev);
+    });
+  }, []);
+
+  const nextDay = useCallback(() => {
+    if (isToday) return;
+    setViewDate(d => {
+      const next = new Date(d + 'T12:00:00');
+      next.setDate(next.getDate() + 1);
+      return toLocalDateString(next);
+    });
+  }, [isToday]);
+
   const [drawer, setDrawer] = useState<DrawerState | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [apiItems, setApiItems] = useState<ApiItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   function copy(field: string, value: string) {
     navigator.clipboard.writeText(value).catch(() => {});
@@ -96,8 +132,8 @@ export default function ParquetHeatmapPanel() {
     setIsLoading(true);
     setFetchError(false);
 
-    const start = encodeURIComponent(selectedDate + 'T00:00:00.000Z');
-    const end   = encodeURIComponent(selectedDate + 'T23:59:59.999Z');
+    const start = encodeURIComponent(viewDate + 'T00:00:00.000Z');
+    const end   = encodeURIComponent(viewDate + 'T23:59:59.999Z');
 
     fetch(
       `/api/v1/telemetry/data-sender?machine_id=${selectedMachine.dbId}&start=${start}&end=${end}&page=1&page_size=1000`,
@@ -118,7 +154,7 @@ export default function ParquetHeatmapPanel() {
       });
 
     return () => { cancelled = true; };
-  }, [selectedDate, selectedMachine]);
+  }, [viewDate, selectedMachine, retryKey]);
 
   const itemMap = useMemo(() => {
     const map = new Map<string, ApiItem>();
@@ -146,6 +182,9 @@ export default function ParquetHeatmapPanel() {
   const errors = data.filter(d => d[2] === 2).length;
 
   const panelStatus = fetchError ? 'err' : isLoading ? 'idle' : errors > 0 ? 'warn' : 'ok';
+
+  // Data display label: gg/mm/aaaa
+  const displayDate = viewDate.split('-').reverse().join('/');
 
   const option = useMemo(() => ({
     animation: false,
@@ -222,14 +261,30 @@ export default function ParquetHeatmapPanel() {
     <>
       <PanelWrapper
         title="Chunk Parquet"
-        description="Heatmap dei chunk parquet scritti dal data sender. Ogni cella = intervallo di 2 minuti. Verde = CHUNK_OK, Rosso = CHUNK_ERR, Grigio = nessun dato."
+        description="Heatmap dei chunk parquet scritti dal data sender. Ogni cella = intervallo di 2 minuti. Verde = CHUNK_OK, Rosso = CHUNK_ERR, Grigio = nessun dato. Usa le frecce per navigare tra i giorni."
         status={panelStatus}
         headerExtra={
-          <div className="flex items-center gap-2 mr-1">
-            <span className="text-[10px] text-slate-400 font-mono">
-              {selectedDate.split('-').reverse().join('/')}
-            </span>
-            <span className="text-[10px] text-slate-500 font-medium">
+          <div className="flex items-center gap-1.5 mr-1">
+            {/* Navigazione giorno */}
+            <button
+              type="button"
+              onClick={prevDay}
+              title="Giorno precedente"
+              className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors text-[10px]"
+            >
+              ‹
+            </button>
+            <span className="text-[10px] text-slate-500 font-mono min-w-[52px] text-center">{displayDate}</span>
+            <button
+              type="button"
+              onClick={nextDay}
+              disabled={isToday}
+              title={isToday ? 'Giorno corrente' : 'Giorno successivo'}
+              className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors text-[10px] disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              ›
+            </button>
+            <span className="text-[10px] text-slate-500 font-medium ml-1">
               {isLoading ? 'Caricamento…' : fetchError ? 'Errore fetch' : `${chunks} chunk · ${errors} errori`}
             </span>
           </div>
@@ -237,8 +292,15 @@ export default function ParquetHeatmapPanel() {
       >
         <div className={`flex flex-col h-full transition-opacity ${isLoading ? 'opacity-40' : 'opacity-100'}`}>
           {fetchError ? (
-            <div className="flex-1 flex items-center justify-center text-sm text-red-500">
-              Impossibile caricare i dati dall'API.
+            <div className="flex-1 flex flex-col items-center justify-center gap-2">
+              <span className="text-sm text-red-500">Impossibile caricare i dati dall'API.</span>
+              <button
+                type="button"
+                onClick={() => setRetryKey(k => k + 1)}
+                className="px-3 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              >
+                Riprova
+              </button>
             </div>
           ) : (
             <ReactECharts
@@ -287,6 +349,7 @@ export default function ParquetHeatmapPanel() {
 
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
               <div className="flex flex-col gap-2">
+                <Row label="Data" value={displayDate} />
                 <Row label="Ora" value={timeRange} />
                 <div className="flex flex-col gap-0.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Stato</span>

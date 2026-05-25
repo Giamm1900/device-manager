@@ -112,7 +112,7 @@ def get_alerts_summary(
     end: datetime | None = None,
     db: Session = Depends(get_db),
 ):
-    conditions = [Alert.id_machine == machine_id]
+    conditions = [Alert.id_machine == machine_id, Alert.status == "resolved"]
     if start:
         conditions.append(Alert.timestamp_start >= start)
     if end:
@@ -131,7 +131,7 @@ def get_alerts_summary(
     ).all()
     return AlertSummaryResponse(
         items=[
-            AlertSummaryItem(day=r.day.date().isoformat(), severity=r.severity, count=int(r.alert_count))
+            AlertSummaryItem(day=r.day.date().isoformat(), severity=r.severity, count=int(r.count))
             for r in rows
         ]
     )

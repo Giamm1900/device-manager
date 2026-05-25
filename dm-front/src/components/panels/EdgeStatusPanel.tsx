@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange } from '../../context/TimeRangeContext';
+import { useTelemetry } from '../../context/TelemetryContext';
 import { resolveTimeWindow } from '../../hooks/useTimeWindow';
 import PanelWrapper from './PanelWrapper';
-
-interface EdgeStatusPoint { t: string; online: boolean; }
-interface EdgeStatusResponse { uptime_percent: number; series: EdgeStatusPoint[]; }
 
 function fmtTs(ts: number, rangeMs: number): string {
   const d = new Date(ts);
@@ -24,25 +22,7 @@ function fmtDuration(minutes: number): string {
 export default function EdgeStatusPanel() {
   const { selectedMachine } = useMachine();
   const { mode, preset, customFrom, customTo } = useTimeRange();
-  const [apiData, setApiData]  = useState<EdgeStatusResponse | null>(null);
-  const [loading, setLoading]  = useState(false);
-  const [error, setError]      = useState(false);
-
-  useEffect(() => {
-    if (!selectedMachine) { setApiData(null); return; }
-    const { start, end } = resolveTimeWindow(mode, preset, customFrom, customTo);
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    fetch(
-      `/api/v1/telemetry/edge-status?machine_id=${selectedMachine.dbId}` +
-      `&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`,
-    )
-      .then(r => { if (!r.ok) throw new Error(); return r.json() as Promise<EdgeStatusResponse>; })
-      .then(body => { if (!cancelled) { setApiData(body); setLoading(false); } })
-      .catch(() => { if (!cancelled) { setError(true); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [selectedMachine, mode, preset, customFrom, customTo]);
+  const { edgeData: apiData, loading, error, refresh } = useTelemetry();
 
   const { startMs, rangeMs } = useMemo(() => {
     const { start, rangeMs } = resolveTimeWindow(mode, preset, customFrom, customTo);
@@ -54,7 +34,6 @@ export default function EdgeStatusPanel() {
   const uptimeColor = uptimeNum < 88 ? 'text-red-600' : uptimeNum < 94 ? 'text-amber-600' : 'text-green-600';
   const panelStatus = error ? 'err' : loading ? 'idle' : !apiData ? 'idle' : uptimeNum < 88 ? 'err' : uptimeNum < 94 ? 'warn' : 'ok';
 
-  // Convert raw series to display segments (downsample to max 90 bars)
   const segments = useMemo((): { online: boolean; ts: number }[] => {
     if (!apiData || !apiData.series.length) return [];
     const raw = apiData.series;
@@ -85,8 +64,15 @@ export default function EdgeStatusPanel() {
           Seleziona una macchina
         </div>
       ) : error ? (
-        <div className="h-full flex items-center justify-center text-sm text-red-500">
-          Errore nel caricamento dei dati.
+        <div className="h-full flex flex-col items-center justify-center gap-2">
+          <span className="text-sm text-red-500">Errore nel caricamento dei dati.</span>
+          <button
+            type="button"
+            onClick={refresh}
+            className="px-3 py-1 rounded text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            Riprova
+          </button>
         </div>
       ) : (
         <div className="h-full flex flex-col gap-1.5 px-3 py-2">
