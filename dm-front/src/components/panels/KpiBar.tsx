@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange, type Preset } from '../../context/TimeRangeContext';
 import { useTelemetry } from '../../context/TelemetryContext';
 
@@ -69,33 +68,22 @@ const RANGE_SUB: Record<Preset, string> = {
   '6h':  'ultime 6 ore',
   '24h': 'ultime 24 ore',
   '7d':  'ultimi 7 giorni',
-  '30d': 'ultimi 30 giorni',
+  '14d': 'ultimi 14 giorni',
 };
 
 export default function KpiBar() {
-  const { selectedMachine } = useMachine();
   const { mode, preset } = useTimeRange();
-  const { pcSeries, ignSeries, edgeData } = useTelemetry();
+  const { pcSeries, edgeData } = useTelemetry();
 
-  const cpu    = useMemo(() => avg(pcSeries.map(p => p.cpu)),    [pcSeries]);
-  const ram    = useMemo(() => avg(pcSeries.map(p => p.memory)), [pcSeries]);
-  const disk   = useMemo(() => avg(pcSeries.map(p => p.disk)),   [pcSeries]);
+  const cpu    = useMemo(() => avg(pcSeries.map(p => p.cpu)),  [pcSeries]);
+  const disk   = useMemo(() => avg(pcSeries.map(p => p.disk)), [pcSeries]);
   const uptime = edgeData?.uptime_percent ?? null;
-  const lastDb = ignSeries.length ? ignSeries[ignSeries.length - 1].db_status : null;
-
-  const dbBadge = !selectedMachine
-    ? { text: '● N/D',  type: 'warn' as const }
-    : lastDb === 'connected'
-    ? { text: '● OK',   type: 'ok'   as const }
-    : lastDb
-    ? { text: '● WARN', type: 'warn' as const }
-    : { text: '● N/D',  type: 'warn' as const };
 
   const rangeSub = mode === 'preset' ? RANGE_SUB[preset] : 'range personalizzato';
   const fmt      = (v: number | null) => v !== null ? `${v.toFixed(1)}%` : '—';
 
   return (
-    <div className="grid grid-cols-5 gap-2 px-2 pt-2 shrink-0">
+    <div className="grid grid-cols-3 gap-2 shrink-0">
       <KpiCard
         label="CPU medio"
         value={fmt(cpu)}
@@ -104,24 +92,11 @@ export default function KpiBar() {
         valueStatus={statusOf(cpu, 50, 75)}
       />
       <KpiCard
-        label="RAM media"
-        value={fmt(ram)}
-        sub={rangeSub}
-        accentClass="border-t-violet-600"
-        valueStatus={statusOf(ram, 65, 80)}
-      />
-      <KpiCard
         label="Disco"
         value={fmt(disk)}
         sub="media nel range"
         accentClass="border-t-amber-500"
         valueStatus={statusOf(disk, 70, 85)}
-      />
-      <KpiCard
-        label="DB Ignition"
-        sub="ultimo stato noto"
-        accentClass="border-t-green-600"
-        badge={dbBadge}
       />
       <KpiCard
         label="Edge uptime"

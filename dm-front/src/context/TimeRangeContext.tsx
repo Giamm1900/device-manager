@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
-export type Preset = '10m' | '1h' | '6h' | '24h' | '7d' | '30d';
+export type Preset = '10m' | '1h' | '6h' | '24h' | '7d' | '14d';
 
 interface TimeRangeValue {
   mode: 'preset' | 'custom';

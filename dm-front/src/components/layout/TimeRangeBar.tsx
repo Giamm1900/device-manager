@@ -7,7 +7,7 @@ const PRESETS: { value: Preset; label: string }[] = [
   { value: '6h',  label: '6 h' },
   { value: '24h', label: '24 h' },
   { value: '7d',  label: '7 giorni' },
-  { value: '30d', label: '30 giorni' },
+  { value: '14d', label: '14 giorni' },
 ];
 
 const PRESET_LABELS: Record<Preset, string> = {
@@ -16,7 +16,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   '6h':  'Ultime 6 ore',
   '24h': 'Ultime 24 ore',
   '7d':  'Ultimi 7 giorni',
-  '30d': 'Ultimi 30 giorni',
+  '14d': 'Ultimi 14 giorni',
 };
 
 function fmtDt(iso: string): string {
@@ -65,79 +65,76 @@ export default function TimeRangeBar() {
       : `${fmtDt(customFrom)} → ${fmtDt(customTo)}`;
 
   return (
-    <div className="flex items-center gap-3 shrink-0 bg-white border-b border-slate-200 px-4 h-10">
+    <div className="shrink-0 bg-white border border-slate-200 rounded-md px-3 py-2.5 flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">Periodo</span>
 
-      {/* Preset pills */}
-      <div className="flex items-center gap-1 shrink-0">
-        {PRESETS.map(p => (
+        {/* Preset pills */}
+        <div className="flex items-center gap-1 flex-wrap">
+          {PRESETS.map(p => (
+            <button
+              key={p.value}
+              type="button"
+              onClick={() => handlePreset(p.value)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                mode === 'preset' && preset === p.value
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+
+          {/* Custom toggle pill */}
           <button
-            key={p.value}
             type="button"
-            onClick={() => handlePreset(p.value)}
-            className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
-              mode === 'preset' && preset === p.value
-                ? 'bg-blue-600 text-white'
+            onClick={handleCustomToggle}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              mode === 'custom'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : showCustom
+                ? 'bg-slate-200 text-slate-700'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            {p.label}
+            Custom
           </button>
-        ))}
+        </div>
 
-        {/* Custom toggle pill */}
-        <button
-          type="button"
-          onClick={handleCustomToggle}
-          className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
-            mode === 'custom'
-              ? 'bg-blue-600 text-white'
-              : showCustom
-              ? 'bg-slate-200 text-slate-700'
-              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-          }`}
-        >
-          Custom
-        </button>
+        <div className="w-px h-4 bg-slate-200 shrink-0" />
+        <span className="text-xs text-slate-500 font-medium truncate min-w-0">{rangeLabel}</span>
       </div>
 
       {/* Custom range inputs — visibili solo quando showCustom è attivo */}
       {showCustom && (
-        <>
-          <div className="w-px h-5 bg-slate-200 shrink-0" />
-
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-[11px] text-slate-400">Da</span>
-            <input
-              type="datetime-local"
-              value={draftFrom}
-              onChange={e => { setDraftFrom(e.target.value); setRangeError(''); }}
-              className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <span className="text-[11px] text-slate-400">A</span>
-            <input
-              type="datetime-local"
-              value={draftTo}
-              onChange={e => { setDraftTo(e.target.value); setRangeError(''); }}
-              className="text-[11px] text-slate-700 border border-slate-200 rounded px-1.5 py-0.5 bg-slate-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <button
-              type="button"
-              onClick={handleApply}
-              className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-700 text-white hover:bg-slate-800 transition-colors"
-            >
-              Applica
-            </button>
-            {rangeError && (
-              <span className="text-[10px] text-red-500">{rangeError}</span>
-            )}
-          </div>
-        </>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-xs text-slate-500 font-medium">Da</span>
+          <input
+            type="datetime-local"
+            value={draftFrom}
+            onChange={e => { setDraftFrom(e.target.value); setRangeError(''); }}
+            className="text-xs text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-xs text-slate-500 font-medium">A</span>
+          <input
+            type="datetime-local"
+            value={draftTo}
+            onChange={e => { setDraftTo(e.target.value); setRangeError(''); }}
+            className="text-xs text-slate-700 border border-slate-200 rounded-md px-2 py-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            onClick={handleApply}
+            className="px-3 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+          >
+            Applica
+          </button>
+          {rangeError && (
+            <span className="text-[11px] text-red-500">{rangeError}</span>
+          )}
+        </div>
       )}
-
-      <div className="w-px h-5 bg-slate-200 shrink-0" />
-
-      {/* Active range indicator */}
-      <span className="text-[11px] text-slate-500 truncate min-w-0">{rangeLabel}</span>
     </div>
   );
 }

@@ -37,10 +37,11 @@ export default function MachineBar() {
   const liveDisabled = !selectedMachine || mode === 'custom';
 
   return (
-    <div className="bg-white border-b border-slate-200 px-4 shrink-0 flex items-center gap-3 h-11">
-      <div className="flex items-center gap-2 min-w-0">
+    <div className="bg-white border-b border-slate-200 px-4 shrink-0 flex items-center gap-4 h-14">
+      <div className="flex items-center gap-2.5 min-w-0">
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">Macchina</span>
         {selectedMachine && (
-          <span className={`w-2 h-2 rounded-full shrink-0 ${dotClass(selectedMachine.status)}`} />
+          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotClass(selectedMachine.status)}`} />
         )}
         <div className="flex flex-col min-w-0">
           <select
@@ -48,7 +49,7 @@ export default function MachineBar() {
             onChange={e => setSelectedMachine(findById(e.target.value))}
             disabled={loading}
             title="Seleziona macchina"
-            className="border border-slate-200 rounded px-2 py-0.5 text-xs text-slate-800 bg-white appearance-none cursor-pointer outline-none focus:border-blue-400 max-w-50 disabled:text-slate-400"
+            className="border-2 border-slate-300 rounded-md px-2.5 py-1 text-sm font-medium text-slate-800 bg-white appearance-none cursor-pointer outline-none focus:border-blue-500 max-w-64 disabled:text-slate-400 disabled:border-slate-200"
           >
             <option value="">
               {loading ? 'Caricamento…' : '— seleziona macchina —'}
@@ -66,7 +67,7 @@ export default function MachineBar() {
             )}
           </select>
           {breadcrumb && (
-            <span className="text-[10px] text-slate-400 leading-none mt-0.5 truncate max-w-50">
+            <span className="text-[11px] text-slate-400 leading-none mt-0.5 truncate max-w-64">
               {breadcrumb}
             </span>
           )}

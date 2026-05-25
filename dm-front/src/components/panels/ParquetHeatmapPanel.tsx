@@ -264,23 +264,23 @@ export default function ParquetHeatmapPanel() {
         description="Heatmap dei chunk parquet scritti dal data sender. Ogni cella = intervallo di 2 minuti. Verde = CHUNK_OK, Rosso = CHUNK_ERR, Grigio = nessun dato. Usa le frecce per navigare tra i giorni."
         status={panelStatus}
         headerExtra={
-          <div className="flex items-center gap-1.5 mr-1">
+          <div className="flex items-center gap-1 mr-1">
             {/* Navigazione giorno */}
             <button
               type="button"
               onClick={prevDay}
               title="Giorno precedente"
-              className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors text-[10px]"
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors text-sm font-bold"
             >
               ‹
             </button>
-            <span className="text-[10px] text-slate-500 font-mono min-w-[52px] text-center">{displayDate}</span>
+            <span className="text-xs text-slate-800 font-semibold font-mono min-w-[64px] text-center bg-slate-100 rounded px-2 py-0.5">{displayDate}</span>
             <button
               type="button"
               onClick={nextDay}
               disabled={isToday}
               title={isToday ? 'Giorno corrente' : 'Giorno successivo'}
-              className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors text-[10px] disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed"
             >
               ›
             </button>

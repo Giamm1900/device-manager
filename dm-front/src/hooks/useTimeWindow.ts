@@ -6,7 +6,7 @@ const PRESET_MS: Record<Preset, number> = {
   '6h':      6 * 60 *      60_000,
   '24h':    24 * 60 *      60_000,
   '7d':  7 * 24 * 60 *     60_000,
-  '30d': 30 * 24 * 60 *    60_000,
+  '14d': 14 * 24 * 60 *    60_000,
 };
 
 export function resolveTimeWindow(
