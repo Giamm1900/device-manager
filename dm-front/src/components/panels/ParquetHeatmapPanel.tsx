@@ -9,17 +9,25 @@ const SLOTS = Array.from({ length: 30 }, (_, i) => String(i * 2).padStart(2, '0'
 interface ApiItem {
   id: number;
   event_subtype: string;
-  parquet_subfolder: string;
-  parquet_filename: string;
-  rows_count: number;
+  parquet_subfolder: string | null;
+  parquet_filename: string | null;
+  rows_count: number | null;
   processing_timestamp_utc: string;
 }
+
+// Stato cella: 1 = OK (righe > 0), 2 = vuoto (righe == 0), 3 = file mancante (filename null)
+type CellStatus = 1 | 2 | 3;
 
 interface DrawerState {
   hour: number;
   slot: number;
-  status: 1 | 2;
+  status: CellStatus;
   item: ApiItem;
+}
+
+function cellStatus(item: ApiItem): CellStatus {
+  if (item.parquet_filename == null) return 3;
+  return (item.rows_count ?? 0) > 0 ? 1 : 2;
 }
 
 function Row({
@@ -156,14 +164,15 @@ export default function ParquetHeatmapPanel() {
     for (let hour = 0; hour < 24; hour++) {
       for (let slot = 0; slot < 30; slot++) {
         const item = itemMap.get(`${hour}_${slot}`);
-        result.push([hour, slot, item ? (item.rows_count === 0 ? 2 : 1) : 0]);
+        result.push([hour, slot, item ? cellStatus(item) : 0]);
       }
     }
     return result;
   }, [itemMap]);
 
-  const chunks = data.filter(d => d[2] === 1 || d[2] === 2).length;
-  const errors = data.filter(d => d[2] === 2).length;
+  const chunks = data.filter(d => d[2] !== 0).length;
+  const empty  = data.filter(d => d[2] === 2).length;
+  const errors = data.filter(d => d[2] === 3).length;
 
   const panelStatus = fetchError ? 'err' : isLoading ? 'idle' : errors > 0 ? 'warn' : 'ok';
 
@@ -193,9 +202,10 @@ export default function ParquetHeatmapPanel() {
     visualMap: {
       type: 'piecewise',
       pieces: [
-        { value: 0, label: 'Nessun dato', color: '#e2e8f0' },
-        { value: 1, label: 'OK',          color: '#16a34a' },
-        { value: 2, label: 'Errore',      color: '#dc2626' },
+        { value: 0, label: 'Nessun dato',   color: '#e2e8f0' },
+        { value: 1, label: 'OK',            color: '#16a34a' },
+        { value: 2, label: 'Vuoto',         color: '#eab308' },
+        { value: 3, label: 'File mancante', color: '#dc2626' },
       ],
       show: false,
     },
@@ -207,8 +217,8 @@ export default function ParquetHeatmapPanel() {
         const time = `${String(hour).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
         if (status === 0) return `<b>${time}</b><br/>Nessun dato`;
         const item = itemMap.get(`${hour}_${slot}`);
-        const statusLabel = status === 1 ? 'CHUNK_OK' : 'CHUNK_ERR';
-        const rows = item ? item.rows_count : '-';
+        const statusLabel = status === 1 ? 'CHUNK_OK' : status === 2 ? 'CHUNK_VUOTO' : 'FILE_MANCANTE';
+        const rows = item ? (item.rows_count ?? 0) : '-';
         return `<b>${time}</b><br/>${statusLabel}<br/>rows: ${rows}`;
       },
     },
@@ -230,7 +240,7 @@ export default function ParquetHeatmapPanel() {
       const [hour, slot, status] = p.data;
       const item = itemMap.get(`${hour}_${slot}`);
       if (!item) return;
-      setDrawer({ hour, slot, status: status as 1 | 2, item });
+      setDrawer({ hour, slot, status: status as CellStatus, item });
     },
   }), [itemMap]);
 
@@ -245,7 +255,7 @@ export default function ParquetHeatmapPanel() {
     <>
       <PanelWrapper
         title="Chunk Parquet"
-        description="Heatmap dei chunk parquet scritti dal data sender. Ogni cella = intervallo di 2 minuti. Verde = CHUNK_OK, Rosso = CHUNK_ERR, Grigio = nessun dato. Usa le frecce per navigare tra i giorni."
+        description="Heatmap dei chunk parquet scritti dal data sender. Ogni cella = intervallo di 2 minuti. Verde = righe > 0, Giallo = 0 righe, Rosso = file mancante, Grigio = nessun dato. Usa le frecce per navigare tra i giorni."
         status={panelStatus}
         headerExtra={
           <div className="flex items-center gap-1 mr-1">
@@ -269,7 +279,7 @@ export default function ParquetHeatmapPanel() {
               ›
             </button>
             <span className="text-[10px] text-slate-500 font-medium ml-1">
-              {isLoading ? 'Caricamento…' : fetchError ? 'Errore fetch' : `${chunks} chunk · ${errors} errori`}
+              {isLoading ? 'Caricamento…' : fetchError ? 'Errore fetch' : `${chunks} chunk · ${empty} vuoti · ${errors} errori`}
             </span>
           </div>
         }
@@ -304,8 +314,12 @@ export default function ParquetHeatmapPanel() {
               <span className="text-[10px] text-slate-500">OK</span>
             </div>
             <div className="flex items-center gap-1.5">
+              <span className="w-3 h-3 rounded-sm shrink-0 bg-yellow-500" />
+              <span className="text-[10px] text-slate-500">Vuoto</span>
+            </div>
+            <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-sm shrink-0 bg-red-600" />
-              <span className="text-[10px] text-slate-500">Errore</span>
+              <span className="text-[10px] text-slate-500">File mancante</span>
             </div>
           </div>
         </div>
@@ -340,9 +354,11 @@ export default function ParquetHeatmapPanel() {
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold w-fit ${
                     drawer.status === 1
                       ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
+                      : drawer.status === 2
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-red-100 text-red-700'
                   }`}>
-                    {drawer.status === 1 ? 'CHUNK_OK' : 'CHUNK_ERR'}
+                    {drawer.status === 1 ? 'CHUNK_OK' : drawer.status === 2 ? 'CHUNK_VUOTO' : 'FILE_MANCANTE'}
                   </span>
                 </div>
               </div>
@@ -350,17 +366,17 @@ export default function ParquetHeatmapPanel() {
               <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
                 <Row
                   label="File parquet"
-                  value={drawer.item.parquet_filename}
+                  value={drawer.item.parquet_filename ?? '—'}
                   mono
-                  onCopy={() => copy('fileName', drawer.item.parquet_filename)}
+                  onCopy={drawer.item.parquet_filename ? () => copy('fileName', drawer.item.parquet_filename!) : undefined}
                   copied={copiedField === 'fileName'}
                 />
-                <Row label="Rows count" value={String(drawer.item.rows_count)} />
+                <Row label="Rows count" value={String(drawer.item.rows_count ?? 0)} />
                 <Row
                   label="Subfolder"
-                  value={drawer.item.parquet_subfolder}
+                  value={drawer.item.parquet_subfolder ?? '—'}
                   mono
-                  onCopy={() => copy('subfolder', drawer.item.parquet_subfolder)}
+                  onCopy={drawer.item.parquet_subfolder ? () => copy('subfolder', drawer.item.parquet_subfolder!) : undefined}
                   copied={copiedField === 'subfolder'}
                 />
               </div>

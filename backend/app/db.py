@@ -5,10 +5,9 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import settings
 
-
 # -csearch_path=public compensates for search_path='' set by the dump
 engine = create_engine(
-    settings.database_url,
+    settings.SQLALCHEMY_DATABASE_URL,
     pool_pre_ping=True,
     connect_args={"options": "-csearch_path=public"},
 )

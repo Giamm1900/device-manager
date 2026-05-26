@@ -1,11 +1,16 @@
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field
 
 
 class DataSenderEventSubtype(StrEnum):
     PARQUET_CHUNK = "data_sender_parquet_chunk"
+
+
+class DataSenderStatus(StrEnum):
+    OK = "SEND_OK"
+    ERR = "SEND_ERR"
 
 
 class PcStatPoint(BaseModel):
@@ -45,6 +50,11 @@ class DataSenderItem(BaseModel):
     parquet_filename: str | None
     rows_count: int | None
     processing_timestamp_utc: datetime | None
+
+    @computed_field
+    @property
+    def status(self) -> DataSenderStatus:
+        return DataSenderStatus.OK if (self.rows_count or 0) > 0 else DataSenderStatus.ERR
 
 
 class DataSenderResponse(BaseModel):

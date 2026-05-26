@@ -7,6 +7,16 @@ export interface PcStatPoint   { t: string; cpu: number | null; memory: number |
 export interface IgnitionPoint { t: string; cpu: number | null; jvm_memory: number | null; db_status: string | null; }
 export interface EdgePoint     { t: string; online: boolean; }
 export interface EdgeResponse  { uptime_percent: number; series: EdgePoint[]; }
+export interface DataSenderItem {
+  id: number;
+  event_subtype: string;
+  parquet_subfolder: string | null;
+  parquet_filename: string | null;
+  rows_count: number | null;
+  processing_timestamp_utc: string | null;
+  status: 'SEND_OK' | 'SEND_ERR';
+}
+export interface DataSenderResponse { items: DataSenderItem[]; page: number; page_size: number; total: number; total_rows: number; }
 
 const LIVE_INTERVAL_MS = 30_000;
 
@@ -15,6 +25,7 @@ interface TelemetryValue {
   ignSeries:          IgnitionPoint[];
   ignLatestDbStatus:  string | null;
   edgeData:           EdgeResponse | null;
+  dataSenderData:     DataSenderResponse | null;
   loading:            boolean;
   error:              boolean;
   isLive:             boolean;
@@ -23,7 +34,7 @@ interface TelemetryValue {
 }
 
 const TelemetryContext = createContext<TelemetryValue>({
-  pcSeries: [], ignSeries: [], ignLatestDbStatus: null, edgeData: null,
+  pcSeries: [], ignSeries: [], ignLatestDbStatus: null, edgeData: null, dataSenderData: null,
   loading: false, error: false,
   isLive: false, setLive: () => {}, refresh: () => {},
 });
@@ -36,6 +47,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   const [ignSeries,         setIgnSeries]         = useState<IgnitionPoint[]>([]);
   const [ignLatestDbStatus, setIgnLatestDbStatus] = useState<string | null>(null);
   const [edgeData,          setEdgeData]          = useState<EdgeResponse | null>(null);
+  const [dataSenderData,    setDataSenderData]    = useState<DataSenderResponse | null>(null);
   const [loading,   setLoading]   = useState(false);
   const [error,     setError]     = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -66,7 +78,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!selectedMachine) {
-      setPcSeries([]); setIgnSeries([]); setIgnLatestDbStatus(null); setEdgeData(null);
+      setPcSeries([]); setIgnSeries([]); setIgnLatestDbStatus(null); setEdgeData(null); setDataSenderData(null);
       setLoading(false); setError(false);
       return;
     }
@@ -81,13 +93,15 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
       fetch(`/api/v1/telemetry/pc-stats?${q}`).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
       fetch(`/api/v1/telemetry/ignition-stats?${q}`).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
       fetch(`/api/v1/telemetry/edge-status?${q}`).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch(`/api/v1/telemetry/data-sender?${q}&page=1&page_size=100`).then(r => { if (!r.ok) throw new Error(); return r.json(); }),
     ])
-      .then(([pc, ign, edge]: [{ series: PcStatPoint[] }, { series: IgnitionPoint[]; latest_db_status: string | null }, EdgeResponse]) => {
+      .then(([pc, ign, edge, ds]: [{ series: PcStatPoint[] }, { series: IgnitionPoint[]; latest_db_status: string | null }, EdgeResponse, DataSenderResponse]) => {
         if (cancelled) return;
         setPcSeries(pc?.series  ?? []);
         setIgnSeries(ign?.series ?? []);
         setIgnLatestDbStatus(ign?.latest_db_status ?? null);
         setEdgeData(edge ?? null);
+        setDataSenderData(ds ?? null);
         setLoading(false);
       })
       .catch(() => {
@@ -102,7 +116,7 @@ export function TelemetryProvider({ children }: { children: ReactNode }) {
   }, [selectedMachine, mode, preset, customFrom, customTo, refreshKey]);
 
   return (
-    <TelemetryContext.Provider value={{ pcSeries, ignSeries, ignLatestDbStatus, edgeData, loading, error, isLive, setLive, refresh }}>
+    <TelemetryContext.Provider value={{ pcSeries, ignSeries, ignLatestDbStatus, edgeData, dataSenderData, loading, error, isLive, setLive, refresh }}>
       {children}
     </TelemetryContext.Provider>
   );

@@ -157,6 +157,8 @@ def get_data_sender(
     page_size: int = Query(default=50, ge=1, le=1440),
     db: Session = Depends(get_db),
 ):
+    # NB: includiamo anche i chunk con parquet_filename NULL: rappresentano
+    # gli invii senza file scritto (resi "rossi" nella heatmap).
     where = (
         TelemetryDataSender.id_machine == filters.machine_id,
         TelemetryDataSender.event_subtype == 'data_sender_parquet_chunk',
