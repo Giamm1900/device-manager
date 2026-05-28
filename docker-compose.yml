@@ -23,7 +23,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/device-manager
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/Industrial-Telemetry-Dashboard
       CORS_ORIGINS: '["http://localhost:5173"]'
     ports:
       - "8000:8000"
