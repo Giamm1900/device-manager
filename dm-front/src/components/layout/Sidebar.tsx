@@ -57,10 +57,10 @@ export default function Sidebar() {
       {/* Logo / branding */}
       <div className="px-3 h-12 flex items-center border-b border-slate-100 shrink-0 overflow-hidden">
         {collapsed ? (
-          <span className="text-[13px] font-bold text-blue-600 leading-none mx-auto">DM</span>
+          <span className="text-[13px] font-bold text-blue-600 leading-none mx-auto">ITD</span>
         ) : (
           <span className="text-[13px] font-bold text-slate-800 tracking-tight whitespace-nowrap">
-            Device<span className="text-blue-600">Manager</span>
+            Industrial Telemetry <span className="text-blue-600">Dashboard</span>
           </span>
         )}
       </div>

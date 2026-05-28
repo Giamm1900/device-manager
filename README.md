@@ -55,12 +55,12 @@ Crea (o aggiorna) `backend/.env.local`:
 
 ```env
 # Opzione A — stringa di connessione completa
-DATABASE_URL=postgresql+psycopg://postgres:<password>@localhost:5432/device-manager
+DATABASE_URL=postgresql+psycopg://postgres:<password>@localhost:5432/Industrial-Telemetry-Dashboard
 
 # Opzione B — parti separate (il backend le assembla)
 DB_USERNAME=postgres
 DB_PASSWORD=<password>
-DB_URL=localhost:5432/device-manager
+DB_URL=localhost:5432/Industrial-Telemetry-Dashboard
 ```
 
 > Se usi PostgreSQL locale su porta diversa (es. 5434) cambia la porta di conseguenza.
@@ -103,10 +103,10 @@ npm run dev
 
 | Variabile | Descrizione | Esempio |
 |-----------|------------|---------|
-| `DATABASE_URL` | Stringa di connessione completa (ha precedenza sulle tre sotto) | `postgresql+psycopg://postgres:postgres@localhost:5432/device-manager` |
+| `DATABASE_URL` | Stringa di connessione completa (ha precedenza sulle tre sotto) | `postgresql+psycopg://postgres:postgres@localhost:5432/Industrial-Telemetry-Dashboard` |
 | `DB_USERNAME` | Utente PostgreSQL | `postgres` |
 | `DB_PASSWORD` | Password PostgreSQL | `postgres` |
-| `DB_URL` | Host, porta e nome DB | `localhost:5432/device-manager` |
+| `DB_URL` | Host, porta e nome DB | `localhost:5432/Industrial-Telemetry-Dashboard` |
 
 In Docker le variabili sono già impostate nel `docker-compose.yml` e non serve `.env.local`.
 
@@ -122,8 +122,8 @@ Se il container postgres esiste già e il DB non è stato ripristinato:
 
 ```bash
 docker exec -i postgres bash -c \
-  "psql -U postgres -d postgres -c 'CREATE DATABASE \"device-manager\";' && \
-   grep -v '^\\\\restrict' /dump/backup-dm-dev.sql | psql -U postgres -d device-manager"
+  "psql -U postgres -d postgres -c 'CREATE DATABASE \"Industrial-Telemetry-Dashboard\";' && \
+   grep -v '^\\\\restrict' /dump/backup-dm-dev.sql | psql -U postgres -d Industrial-Telemetry-Dashboard"
 ```
 
 Per ripristinare da zero (distrugge i dati esistenti):
@@ -144,7 +144,7 @@ Attendi qualche secondo in più — il restore del dump al primo avvio può rich
 Il dump imposta `search_path = ''`. Assicurati che la stringa di connessione includa `options=-csearch_path=public` oppure che `DB_URL` punti a un utente configurato con `SET search_path TO public`.
 
 **Il nome del database contiene un trattino**
-`device-manager` va sempre quotato nelle stringhe di connessione psql. Nei connect string SQLAlchemy il trattino è gestito automaticamente.
+`Industrial-Telemetry-Dashboard` va sempre quotato nelle stringhe di connessione psql. Nei connect string SQLAlchemy il trattino è gestito automaticamente.
 
 **CORS error dal frontend**
 Verifica che l'API sia raggiungibile su `http://localhost:8000` e che `CORS_ORIGINS` in `docker-compose.yml` (o `cors_origins` in `.env.local`) includa `http://localhost:5173`.

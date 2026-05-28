@@ -92,3 +92,5 @@ backup-dm-dev-old
 backup-dm-dev.sql
 graphify-out
 .claude
+CLAUDE.md
+seed_telemetry.py
