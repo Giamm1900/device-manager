@@ -1,6 +1,4 @@
-import { MachineProvider }      from '../context/MachineContext';
 import { TimeRangeProvider }    from '../context/TimeRangeContext';
-import { useMachine }           from '../context/MachineContext';
 import Sidebar                  from '../components/layout/Sidebar';
 import MachineBar               from '../components/layout/MachineBar';
 import TimeRangeBar             from '../components/layout/TimeRangeBar';
@@ -10,6 +8,8 @@ import IgnitionPanel            from '../components/panels/IgnitionPanel';
 import ParquetHeatmapPanel      from '../components/panels/ParquetHeatmapPanel';
 import EdgeStatusPanel          from '../components/panels/EdgeStatusPanel';
 import { TelemetryProvider } from '../providers/telemetry-provider';
+import { useMachine } from '../hooks/useMachine';
+import { MachineProvider } from '../providers/machine-provider';
 
 function PanelArea() {
   const { selectedMachine } = useMachine();

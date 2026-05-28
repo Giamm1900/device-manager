@@ -1,4 +1,4 @@
-import { createContext} from 'react';
+import { createContext } from 'react';
 import type { Machine } from '../data/mockTree';
 
 export interface MachineContextValue {

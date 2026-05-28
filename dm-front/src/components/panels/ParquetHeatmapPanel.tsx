@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { useMachine } from '../../context/MachineContext';
 import PanelWrapper from './PanelWrapper';
+import { useMachine } from '../../hooks/useMachine';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const SLOTS = Array.from({ length: 30 }, (_, i) => String(i * 2).padStart(2, '0'));
@@ -100,6 +100,30 @@ export default function ParquetHeatmapPanel() {
   const [fetchError, setFetchError] = useState(false);
   const [retryKey, setRetryKey] = useState(0);
 
+  // --- 1. CHIAVE DI TRACCIAMENTO DEI PARAMETRI ---
+  const currentRequestKey = selectedMachine
+    ? `${selectedMachine.dbId}-${viewDate}-${retryKey}`
+    : "";
+  const [lastRequestKey, setLastRequestKey] = useState("");
+
+  // --- 2. GESTIONE DELLO STATO NELLA FASE DI RENDER (NO EFFECT) ---
+  
+  // Se i parametri cambiano, attiviamo il caricamento immediatamente nel render
+  if (selectedMachine && currentRequestKey !== lastRequestKey) {
+    setLastRequestKey(currentRequestKey);
+    setIsLoading(true);
+    setFetchError(false);
+  }
+
+  // Se la macchina viene deselezionata, svuotiamo lo stato nel render
+  const hasStaleData = apiItems.length > 0 || isLoading || fetchError;
+  if (!selectedMachine && hasStaleData) {
+    setApiItems([]);
+    setIsLoading(false);
+    setFetchError(false);
+    setLastRequestKey("");
+  }
+
   function copy(field: string, value: string) {
     navigator.clipboard.writeText(value).catch(() => {});
     setCopiedField(field);
@@ -114,15 +138,10 @@ export default function ParquetHeatmapPanel() {
   }, [drawer]);
 
   useEffect(() => {
-    if (!selectedMachine) {
-      setApiItems([]);
-      setIsLoading(false);
-      return;
-    }
+    if (!selectedMachine) return; // Lo svuotamento è già gestito sopra nel render
 
     let cancelled = false;
-    setIsLoading(true);
-    setFetchError(false);
+    // NOTA: setIsLoading(true) e setFetchError(false) sono stati rimossi da qui!
 
     const start = encodeURIComponent(viewDate + 'T00:00:00.000Z');
     const end   = encodeURIComponent(viewDate + 'T23:59:59.999Z');
@@ -137,11 +156,11 @@ export default function ParquetHeatmapPanel() {
       .then(body => {
         if (cancelled) return;
         setApiItems(body.items);
-        setIsLoading(false);
+        setIsLoading(false); // Consentito: asincrono dentro il .then()
       })
       .catch(() => {
         if (cancelled) return;
-        setFetchError(true);
+        setFetchError(true); // Consentito: asincrono dentro il .catch()
         setIsLoading(false);
       });
 

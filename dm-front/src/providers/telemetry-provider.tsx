@@ -1,8 +1,8 @@
 import { type ReactNode, useState, useCallback, useRef, useEffect } from "react";
-import { useMachine } from "../context/MachineContext";
 import { type PcStatPoint, type IgnitionPoint, type EdgeResponse, type DataSenderResponse, TelemetryContext } from "../context/TelemetryContext";
 import { useTimeRange } from "../context/TimeRangeContext";
 import { resolveTimeWindow } from "../hooks/useTimeWindow";
+import { useMachine } from "../hooks/useMachine";
 
 const LIVE_INTERVAL_MS = 30_000;
 

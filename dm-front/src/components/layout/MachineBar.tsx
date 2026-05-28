@@ -1,8 +1,8 @@
-import { useMachine }   from '../../context/MachineContext';
 import { useApiTree }   from '../../hooks/useApiTree';
 import { useTimeRange } from '../../context/TimeRangeContext';
 import type { MachineStatus, Machine } from '../../data/mockTree';
 import { useTelemetry } from '../../hooks/useTelemetry';
+import { useMachine } from '../../hooks/useMachine';
 
 function dotClass(status: MachineStatus): string {
   if (status === 'online')  return 'bg-green-500';

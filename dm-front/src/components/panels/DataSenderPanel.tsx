@@ -1,4 +1,4 @@
-import { useMachine } from '../../context/MachineContext';
+import { useMachine } from '../../hooks/useMachine';
 import { useTelemetry } from '../../hooks/useTelemetry';
 import PanelWrapper from './PanelWrapper';
 
