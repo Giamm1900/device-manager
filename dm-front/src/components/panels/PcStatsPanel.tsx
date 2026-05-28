@@ -3,8 +3,8 @@ import ReactECharts from 'echarts-for-react';
 import PanelWrapper from './PanelWrapper';
 import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange } from '../../context/TimeRangeContext';
-import { useTelemetry } from '../../context/TelemetryContext';
 import { resolveTimeWindow } from '../../hooks/useTimeWindow';
+import { useTelemetry } from '../../hooks/useTelemetry';
 
 function fmtTs(ts: number, rangeMs: number): string {
   const d = new Date(ts);

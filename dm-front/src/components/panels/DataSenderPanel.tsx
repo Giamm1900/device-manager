@@ -1,5 +1,5 @@
 import { useMachine } from '../../context/MachineContext';
-import { useTelemetry } from '../../context/TelemetryContext';
+import { useTelemetry } from '../../hooks/useTelemetry';
 import PanelWrapper from './PanelWrapper';
 
 const thClass = 'sticky top-0 bg-slate-50 text-left text-[10px] font-semibold uppercase tracking-wide text-slate-400 px-2 py-1.5 border-b border-slate-200';

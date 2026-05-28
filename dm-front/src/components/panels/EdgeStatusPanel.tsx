@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useMachine }   from '../../context/MachineContext';
 import { useTimeRange } from '../../context/TimeRangeContext';
-import { useTelemetry } from '../../context/TelemetryContext';
 import { resolveTimeWindow } from '../../hooks/useTimeWindow';
 import PanelWrapper from './PanelWrapper';
+import { useTelemetry } from '../../hooks/useTelemetry';
 
 function fmtTs(ts: number, rangeMs: number): string {
   const d = new Date(ts);
