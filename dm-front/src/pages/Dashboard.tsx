@@ -1,4 +1,3 @@
-import { TimeRangeProvider }    from '../context/TimeRangeContext';
 import Sidebar                  from '../components/layout/Sidebar';
 import MachineBar               from '../components/layout/MachineBar';
 import TimeRangeBar             from '../components/layout/TimeRangeBar';
@@ -10,6 +9,7 @@ import EdgeStatusPanel          from '../components/panels/EdgeStatusPanel';
 import { TelemetryProvider } from '../providers/telemetry-provider';
 import { useMachine } from '../hooks/useMachine';
 import { MachineProvider } from '../providers/machine-provider';
+import { TimeRangeProvider } from '../providers/time-range-provider';
 
 function PanelArea() {
   const { selectedMachine } = useMachine();

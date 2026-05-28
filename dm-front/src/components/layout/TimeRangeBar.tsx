@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useTimeRange, type Preset } from '../../context/TimeRangeContext';
+import { type Preset } from '../../context/TimeRangeContext';
+import { useTimeRange } from '../../hooks/useTimeRange';
 
 const PRESETS: { value: Preset; label: string }[] = [
   { value: '10m', label: '10 min' },

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { useTimeRange, type Preset } from '../../context/TimeRangeContext';
 import { useTelemetry } from '../../hooks/useTelemetry';
+import type { Preset } from '../../context/TimeRangeContext';
+import { useTimeRange } from '../../hooks/useTimeRange';
 
 type TrendStatus = 'ok' | 'warn' | 'err';
 

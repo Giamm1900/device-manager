@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import PanelWrapper from './PanelWrapper';
-import { useTimeRange } from '../../context/TimeRangeContext';
 import { resolveTimeWindow } from '../../hooks/useTimeWindow';
 import { useTelemetry } from '../../hooks/useTelemetry';
 import { useMachine } from '../../hooks/useMachine';
+import { useTimeRange } from '../../hooks/useTimeRange';
 
 function fmtTs(ts: number, rangeMs: number): string {
   const d = new Date(ts);
